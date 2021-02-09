@@ -1,0 +1,83 @@
+{
+  "search": {
+    "time_interval_h": 168
+  },
+  "filter": {
+    "aircraft_type": [
+      "B736",
+      "B737",
+      "B738",
+      "B739",
+      "A319",
+      "A320",
+      "A321",
+      "A19N",
+      "A20N",
+      "A21N"
+    ],
+    "operator": [
+      "AFR",
+      "AZA",
+      "BAW",
+      "DLH",
+      "EZY",
+      "FIN",
+      "KLM",
+      "RYR",
+      "SAS",
+      "SWR",
+      "TFL",
+      "TRA",
+      "VLG",
+      "WZZ"
+    ],
+    "icao_region": [
+      "E", "L"
+    ]
+  },
+  "rank": {
+    "registration": {
+      "value": [
+        "DAIZC",
+        "DAIZG",
+        "ECJPL",
+        "EIDPC",
+        "EIDSA",
+        "EIDSL",
+        "EIGJK",
+        "FHBNK",
+        "GEUUS",
+        "GEZTZ",
+        "HALWC",
+        "HBIJI",
+        "HBIJQ",
+        "HBJLS",
+        "OHLXF",
+        "OYKAL",
+        "PHBXW",
+        "PHHZE",
+        "PHTFA"
+      ],
+      "score_match": 15.0
+    },
+    "flight_time": {
+      "min": 0,
+      "max": 60,
+      "penalty_per_min": 1.0
+    },
+    "airport": {
+      "value": [
+        "LFKJ",
+        "LOWI",
+        "LFKC",
+        "LFMN",
+        "LOWS",
+        "EGNM",
+        "LFML",
+        "LIRN",
+        "LSGG"
+      ],
+      "score_match": 30.0
+    }
+  }
+}
