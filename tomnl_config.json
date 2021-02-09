@@ -80,18 +80,21 @@
       "penalty_per_min": 1.0
     },
     "airport": {
-      "value": [
-        "LFKJ",
-        "LOWI",
-        "LFKC",
-        "LFMN",
-        "LOWS",
-        "EGNM",
-        "LFML",
-        "LIRN",
-        "LSGG"
-      ],
-      "score_match": 30.0
+      "LFKJ": 30,
+      "LGSM": 30,
+      "LOWI": 30,
+      "LXGB": 30,
+      "LFKC": 20,
+      "LFMN": 20,
+      "LOWS": 20,
+      "EGNM": 10,
+      "LFML": 10,
+      "LIRN": 10,
+      "LSGG": 10,
+      "ENBR": 5,
+      "EH": 5,
+      "LO": 5,
+      "LS": 5
     }
   }
 }

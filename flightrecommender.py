@@ -166,13 +166,14 @@ def score_by_registration(flights, aircraft, registrations, score_match):
             f['score'] += score_match
 
 
-def score_by_airport(flights, airports, score_match):
-    logging.debug(f'Scoring airports {airports}...')
+def score_by_airport(flights, airports):
+    logging.debug(f'Scoring airports {[k for k in airports.keys()]}...')
     for f in flights:
-        if f['estDepartureAirport'] in airports:
-            f['score'] += score_match
-        if f['estArrivalAirport'] in airports:
-            f['score'] += score_match
+        for ap, score in airports.items():
+            if f['estDepartureAirport'].startswith(ap):
+                f['score'] += score
+            if f['estArrivalAirport'].startswith(ap):
+                f['score'] += score
 
 
 def flightrecommender(*args, **kwargs):
@@ -212,9 +213,7 @@ def flightrecommender(*args, **kwargs):
                               conf['rank']['registration']['value'],
                               conf['rank']['registration']['score_match'])
     if 'airport' in conf['rank']:
-        score_by_airport(flights,
-                         conf['rank']['airport']['value'],
-                         conf['rank']['airport']['score_match'])
+        score_by_airport(flights, conf['rank']['airport'])
 
     # Show results
     for f in sorted(flights, key=lambda fl: (-fl['score'], fl['callsign'])):
