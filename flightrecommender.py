@@ -24,7 +24,9 @@ import requests
 import datetime
 import time
 import re
+import xmltodict
 from diskcache import Cache
+from typing import List
 
 import logging
 
@@ -60,7 +62,7 @@ def opensky_get_flights_segment(begin_unix: int, end_unix: int):
         'end': end_unix,
     })
     # Cache results if possible
-    if cachable and len(f) is not 0:
+    if cachable:  # and len(f) is not 0:
         logging.debug('Write to cache for future reference...')
         cache[begin_unix] = f
     # Return
@@ -176,6 +178,86 @@ def score_by_airport(flights, airports):
                 f['score'] += score
 
 
+def request_xml(url, params={}):
+    r = requests.get(url, params=params)
+    logging.debug(f'Request url: {r.url}')
+    while r.status_code == 503:
+        logging.debug('Temporarily unavailable (503), retrying...')
+        time.sleep(1.0)
+        r = requests.get(url, params=params)
+    if r.status_code == 404:
+        return []
+    elif r.status_code is not 200:
+        raise RuntimeError(f'Request status not OK (200), namely: {r.status_code}.')
+    return xmltodict.parse(r.text)
+
+
+@cache.memoize(expire=3600)
+def aviationweather_get_metar(icao: str):
+    metar_xml = request_xml('https://aviationweather.gov/adds/dataserver_current/httpparam',
+                            {
+                                'dataSource': 'metars',
+                                'requestType': 'retrieve',
+                                'format': 'xml',
+                                'stationString': icao,
+                                'mostRecentForEachStation': True,
+                                'hoursBeforeNow': 3
+                            })
+    try:
+        metar = metar_xml['response']['data']['METAR']['raw_text']
+    except KeyError:
+        metar = ''
+    return metar
+
+
+def aviationweather_get_metars(icaos: List[str]):
+    metar = {}
+    for icao in icaos:
+        if icao not in metar:
+            metar[icao] = aviationweather_get_metar(icao)
+    return metar
+
+
+def score_by_weather(flights, metar, weather_score):
+    for f in flights:
+        ms = [metar[f['estDepartureAirport']], metar[f['estArrivalAirport']]]
+        for m in ms:
+            if 'gust_per_kt' in weather_score:
+                s = re.search(r' [0-9]{3}(?P<wind>[0-9]{2})G(?P<gust>[0-9]+)KT ', m)
+                if s:
+                    gust_add = int(s.group('gust')) - int(s.group('wind'))
+                    f['score'] += gust_add * weather_score['gust_per_kt']
+            if 'vis' in weather_score:
+                s = re.search(r' (?P<vis>[0-9]{4}) ', m)
+                if s:
+                    if int(s.group('vis')) < 9999:
+                        f['score'] += weather_score['vis']
+            if 'rvr' in weather_score:
+                s = re.search(r' R[0-9]+[LCR]*/P(?P<rvr>[0-9]+)', m)
+                if s:
+                    f['score'] += weather_score['rvr']
+            if 'ceil' in weather_score:
+                for s in re.finditer(r' [A-Z]{3}(?P<ceil>[0-9]{3}) ', m):
+                    if int(s.group('ceil')) < 2:
+                        f['score'] += weather_score['ceil']
+            if 'rain' in weather_score:
+                s = re.search(r' [+-]*(?:[A-Z]{2})*RA(?:[A-Z]{2})* ', m)
+                if s:
+                    f['score'] += weather_score['rain']
+            if 'snow' in weather_score:
+                s = re.search(r' [+-]*(?:[A-Z]{2})*SN(?:[A-Z]{2})* ', m)
+                if s:
+                    f['score'] += weather_score['snow']
+            if 'tcu' in weather_score:
+                s = re.search(r'TCU ', m)
+                if s:
+                    f['score'] += weather_score['tcu']
+            if 'thunder' in weather_score:
+                s = re.search(r' [+-]*(?:[A-Z]{2})*TS(?:[A-Z]{2})* ', m)
+                if s:
+                    f['score'] += weather_score['thunder']
+
+
 def flightrecommender(*args, **kwargs):
     conf = {}
     if 'config_json' in kwargs:
@@ -200,6 +282,10 @@ def flightrecommender(*args, **kwargs):
     if 'aircraft_type' in conf['filter']:
         flights = filter_by_aircraft_type(flights, aircraft, conf['filter']['aircraft_type'])
 
+    # Get weather data for remaining flights
+    icaos = [f['estDepartureAirport'] for f in flights] + [f['estArrivalAirport'] for f in flights]
+    metar = aviationweather_get_metars(icaos)
+
     # Ranking
     for f in flights:
         f['score'] = 0.0
@@ -214,6 +300,8 @@ def flightrecommender(*args, **kwargs):
                               conf['rank']['registration']['score_match'])
     if 'airport' in conf['rank']:
         score_by_airport(flights, conf['rank']['airport'])
+    if 'weather' in conf['rank']:
+        score_by_weather(flights, metar, conf['rank']['weather'])
 
     # Show results
     for f in sorted(flights, key=lambda fl: (-fl['score'], fl['callsign'])):
@@ -225,7 +313,13 @@ def flightrecommender(*args, **kwargs):
             ac = aircraft[f['icao24']]
             registration = ac['registration']
             typecode = ac['typecode']
-        print(f"{int(f['score']):>4}:\t{f['estDepartureAirport']} - {f['estArrivalAirport']}\t{dep_time_str}\t{f['callsign']}\t{registration} ({typecode})")
+        wx_dep = '?'
+        wx_arr = '?'
+        if f['estDepartureAirport'] in metar:
+            wx_dep = metar[f['estDepartureAirport']]
+        if f['estArrivalAirport'] in metar:
+            wx_arr = metar[f['estArrivalAirport']]
+        print(f"{int(f['score']):>4}:\t{f['estDepartureAirport']} - {f['estArrivalAirport']}\t{dep_time_str}\t{f['callsign']}\t{registration} ({typecode})\t{wx_dep} -- {wx_arr}")
 
 
 if __name__ == '__main__':

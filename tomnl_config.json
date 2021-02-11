@@ -95,6 +95,16 @@
       "EH": 5,
       "LO": 5,
       "LS": 5
+    },
+    "weather": {
+      "gust_per_kt": 1,
+      "vis": 5,
+      "rvr": 10,
+      "ceil": 10,
+      "rain": 5,
+      "snow": 10,
+      "tcu": 15,
+      "thunder": 20
     }
   }
 }
