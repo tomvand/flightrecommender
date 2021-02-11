@@ -116,6 +116,16 @@ def filter_by_operator(flights, operators):
     return filtered
 
 
+def filter_single_airport(flights):
+    logging.debug(f'Filtering flights with same departure and arrival airport...')
+    filtered = []
+    for f in flights:
+        if f['estDepartureAirport'] != f['estArrivalAirport']:
+            filtered.append(f)
+    logging.debug(f'Done. {len(filtered)} flights remain.')
+    return filtered
+
+
 @cache.memoize()
 def opensky_get_aircraft(icao24):
     logging.debug(f'Request aircraft information for {icao24}...')
@@ -274,6 +284,8 @@ def flightrecommender(*args, **kwargs):
         flights = filter_by_region(flights, conf['filter']['icao_region'])
     if 'operator' in conf['filter']:
         flights = filter_by_operator(flights, conf['filter']['operator'])
+    if 'single_airport' in conf['filter'] and conf['filter']['single_airport']:
+        flights = filter_single_airport(flights)
 
     # Get aircraft data for remaining flights
     aircraft = get_aircraft_from_flights(flights)
@@ -328,6 +340,6 @@ if __name__ == '__main__':
     parser.add_argument('config_json', type=str)
     args = parser.parse_args()
 
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+    # logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
     flightrecommender(**vars(args))

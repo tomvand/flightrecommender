@@ -47,7 +47,8 @@
     ],
     "icao_region": [
       "E", "L"
-    ]
+    ],
+    "single_airport": true
   },
   "rank": {
     "registration": {
