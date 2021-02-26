@@ -99,6 +99,7 @@
     },
     "weather": {
       "gust_per_kt": 1,
+      "clouds": 3,
       "vis": 5,
       "rvr": 10,
       "ceil": 10,

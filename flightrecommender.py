@@ -62,7 +62,7 @@ def opensky_get_flights_segment(begin_unix: int, end_unix: int):
         'end': end_unix,
     })
     # Cache results if possible
-    if cachable:  # and len(f) is not 0:
+    if cachable and len(f) is not 0:
         logging.debug('Write to cache for future reference...')
         cache[begin_unix] = f
     # Return
@@ -237,6 +237,10 @@ def score_by_weather(flights, metar, weather_score):
                 if s:
                     gust_add = int(s.group('gust')) - int(s.group('wind'))
                     f['score'] += gust_add * weather_score['gust_per_kt']
+            if 'clouds' in weather_score:
+                s = re.search(r'(?P<coverage>(FEW|SCT|BKN|OVC))[0-9]+', m)
+                if s:
+                    f['score'] += weather_score['clouds']
             if 'vis' in weather_score:
                 s = re.search(r' (?P<vis>[0-9]{4}) ', m)
                 if s:
@@ -340,6 +344,6 @@ if __name__ == '__main__':
     parser.add_argument('config_json', type=str)
     args = parser.parse_args()
 
-    # logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
     flightrecommender(**vars(args))
