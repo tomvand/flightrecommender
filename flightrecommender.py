@@ -319,6 +319,11 @@ def flightrecommender(*args, **kwargs):
     if 'weather' in conf['rank']:
         score_by_weather(flights, metar, conf['rank']['weather'])
 
+    # Add missing callsigns
+    for f in flights:
+        if f['callsign'] is None:
+            f['callsign'] = '???'
+
     # Show results
     for f in sorted(flights, key=lambda fl: (-fl['score'], fl['callsign'])):
         dep_time = datetime.datetime.fromtimestamp(f['firstSeen'], tz=datetime.timezone.utc)
