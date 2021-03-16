@@ -326,7 +326,7 @@ def flightrecommender(*args, **kwargs):
 
     # Show results
     last_callsign = None
-    for f in sorted(flights, key=lambda fl: (-fl['score'], fl['callsign'])):
+    for f in sorted(flights, key=lambda fl: (-fl['score'], fl['estDepartureAirport'], fl['estArrivalAirport'])):
         # Skip duplicate flights
         if f['callsign'] == last_callsign:
             continue
