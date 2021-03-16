@@ -18,7 +18,8 @@
       "A21N"
     ],
     "icao_region": [
-      "E", "L"
+      "EB", "ED", "EG", "EH", "EI", "EK", "EL", "EN",
+      "LC", "LE", "LF", "LG", "LI", "LJ", "LM", "LN", "LO", "LS", "LX"
     ],
     "single_airport": true
   },
