@@ -167,6 +167,29 @@ def score_by_flight_time(flights, min_time, max_time, penalty_per_min):
             f['score'] -= penalty_per_min * (flight_time - max_time_dt).total_seconds() / 60
 
 
+def is_time_between(begin_time, end_time, check_time=None):
+    # https://stackoverflow.com/questions/10048249/how-do-i-determine-if-current-time-is-within-a-specified-range-using-pythons-da
+    # If check time is not given, default to current UTC time
+    check_time = check_time or datetime.utcnow().time()
+    if begin_time < end_time:
+        return check_time >= begin_time and check_time <= end_time
+    else: # crosses midnight
+        return check_time >= begin_time or check_time <= end_time
+
+
+def score_by_depart_within(flights, min_time, max_time, score_match):
+    logging.debug(f'Scoring by departure time iwthin {min_time} and {max_time} from now...')
+    now_z = datetime.datetime.now(tz=datetime.timezone.utc)
+    min_z = now_z + datetime.timedelta(minutes=min_time)
+    max_z = now_z + datetime.timedelta(minutes=max_time)
+    for f in flights:
+        time_dep = datetime.datetime.fromtimestamp(int(f['firstSeen']), tz=datetime.timezone.utc).time()
+        time_min = min_z.time()
+        time_max = max_z.time()
+        if is_time_between(time_min, time_max, time_dep):
+            f['score'] += score_match
+
+
 def score_by_registration(flights, aircraft, registrations, score_match):
     logging.debug(f'Scoring registrations {registrations}...')
     for f in flights:
@@ -310,6 +333,11 @@ def flightrecommender(*args, **kwargs):
                              conf['rank']['flight_time']['min'],
                              conf['rank']['flight_time']['max'],
                              conf['rank']['flight_time']['penalty_per_min'])
+    if 'depart_within' in conf['rank']:
+        score_by_depart_within(flights,
+                               conf['rank']['depart_within']['min'],
+                               conf['rank']['depart_within']['max'],
+                               conf['rank']['depart_within']['score_match'])
     if 'registration' in conf['rank']:
         score_by_registration(flights, aircraft,
                               conf['rank']['registration']['value'],

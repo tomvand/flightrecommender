@@ -53,6 +53,11 @@
       "max": 60,
       "penalty_per_min": 1.0
     },
+    "depart_within" : {
+      "min": 60,
+      "max": 180,
+      "score_match": 15.0
+    },
     "airport": {
       "LFKJ": 30,
       "LGSM": 30,
