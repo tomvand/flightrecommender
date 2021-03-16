@@ -325,7 +325,13 @@ def flightrecommender(*args, **kwargs):
             f['callsign'] = '???'
 
     # Show results
+    last_callsign = None
     for f in sorted(flights, key=lambda fl: (-fl['score'], fl['callsign'])):
+        # Skip duplicate flights
+        if f['callsign'] == last_callsign:
+            continue
+        last_callsign = f['callsign']
+        # Print flight
         dep_time = datetime.datetime.fromtimestamp(f['firstSeen'], tz=datetime.timezone.utc)
         dep_time_str = '{:02d}{:02d}Z'.format(dep_time.hour, dep_time.minute)
         registration = '?'
