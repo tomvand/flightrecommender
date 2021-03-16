@@ -62,7 +62,7 @@ def opensky_get_flights_segment(begin_unix: int, end_unix: int):
         'end': end_unix,
     })
     # Cache results if possible
-    if cachable and len(f) is not 0:
+    if cachable:  # and len(f) is not 0:
         logging.debug('Write to cache for future reference...')
         cache[begin_unix] = f
     # Return
